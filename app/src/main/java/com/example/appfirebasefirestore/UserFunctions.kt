@@ -1,37 +1,19 @@
 package com.example.appfirebasefirestore
 
-import com.example.appfirebasefirestore.User
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class UserFunctions {
     val db = FirebaseFirestore.getInstance()
 
-    fun addUser(user: User) {
-        db.collection("users") // "users" is the collection name
-            .document(user.uid) // Use UID as document ID for easy retrieval
+    fun addUser(user: HashMap<String, String>, uid: String) {
+        db.collection("users").document(uid)
             .set(user)
-            .addOnSuccessListener {
-
-            }
-            .addOnFailureListener { e ->
-
-            }
     }
 
     fun getUser(uid: String) {
         db.collection("users").document(uid)
             .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val user = document.toObject(User::class.java)
-
-                } else {
-
-                }
-            }
-            .addOnFailureListener { e ->
-
-            }
     }
 
     fun getAllUsers() {
