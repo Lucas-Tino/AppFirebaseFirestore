@@ -54,6 +54,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.appfirebasefirestore.UserFunctions
+import com.google.firebase.firestore.toObject
+import kotlinx.coroutines.tasks.await
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,12 +111,12 @@ fun HomeScreen(
     navHostController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    val userFunctions = UserFunctions();
+
     val context = LocalContext.current
     val authState = authViewModel.authState.observeAsState()
 
     val db = FirebaseFirestore.getInstance()
-
-    val user: Any
 
     LaunchedEffect(authState.value) {
         when(authState.value){
@@ -122,8 +125,23 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        // get
+    val uid = FirebaseAuth.getInstance().currentUser?.uid;
+    var userData by remember(uid) {
+        mutableStateOf(User())
+    }
+
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            val userRef = db.collection("users").document(uid)
+            val userSnapshot = userRef.get().await()
+
+            if (userSnapshot.exists()) {
+                val user = userSnapshot.toObject<User>()
+                user?.let {
+                    userData = it
+                }
+            }
+        }
     }
 
     Column(
@@ -167,7 +185,7 @@ fun HomeScreen(
             Modifier
                 .padding(24.dp)
         ){
-            Text(text = "Seja bem vindo, ")
+            Text(text = "Seja bem vindo, " +userData.name, color = Color(254, 102, 0))
             TextButton(onClick = {
                 authViewModel.signout()
             }) {
