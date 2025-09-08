@@ -4,7 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class UserFunctions {
-    var userList: MutableList<User> = mutableListOf<User>();
+    var userList: MutableList<User> = mutableListOf();
 
 
     val db = FirebaseFirestore.getInstance()
@@ -15,28 +15,25 @@ class UserFunctions {
     }
 
     fun getUser(uid: String) {
-        /* db.collection("users").document(uid)
+        db.collection("users").document(uid)
             .get()
-            .addOnSuccessListener { documentSnapshot ->
-                gottenUser = documentSnapshot.toObject(User::class.java)!!
-            }
-            .addOnFailureListener { e ->
-            }
-         */
+        // função obsoleta
     }
 
     fun getAllUsers() {
         db.collection("users")
             .get()
-            .addOnSuccessListener { result ->
-                userList = mutableListOf<User>()
-                for (document in result) {
-                    val user = document.toObject(User::class.java)
-                    userList.add(user)
-                }
-            }
-            .addOnFailureListener { e ->
-
+            .addOnSuccessListener { documents ->
+                userList = documents.map { document ->
+                    User(
+                        id = document.id,
+                        nome = document.getString("nome") ?: "",
+                        email = document.getString("email") ?: "",
+                        telefone = document.getString("telefone") ?: "",
+                        mensagem = document.getString("mensagem") ?: "",
+                        senha = document.getString("senha") ?: ""
+                    )
+                } as MutableList<User>
             }
     }
 
