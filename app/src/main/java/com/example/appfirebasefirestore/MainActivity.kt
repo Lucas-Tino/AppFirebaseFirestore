@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
@@ -62,13 +63,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.appfirebasefirestore.R.color.bg_dark
+import com.example.appfirebasefirestore.R.color.bg_mid
+import com.example.appfirebasefirestore.R.color.bg_light
+import com.example.appfirebasefirestore.R.color.destaque
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,14 +122,6 @@ class MainActivity : ComponentActivity() {
                                 authViewModel
                             )
                         }
-                        composable("updateown") {
-                            UpdateOwnAccountScreen(
-                                Modifier,
-                                act,
-                                navController,
-                                authViewModel
-                            )
-                        }
                         composable("create") {
                             CreateUpdateScreen(
                                 Modifier,
@@ -129,17 +129,18 @@ class MainActivity : ComponentActivity() {
                                 navController,
                                 authViewModel,
                                 "create",
-                                "a"
+                                ""
                             )
                         }
-                        composable("update") {
+                        composable("update/{id}") { backStackEntry ->
+                            val uid = backStackEntry.arguments?.getString("id")
                             CreateUpdateScreen(
                                 Modifier,
                                 act,
                                 navController,
                                 authViewModel,
                                 "update",
-                                "a"
+                                uid.toString()
                             )
                         }
                     }
@@ -204,10 +205,10 @@ fun HomeScreen(
     if (deleteOwnAccountDialog == true) {
         AlertDialog(
             title = {
-                Text(text = "Deseja mesmo excluir sua própria conta?", color = Color(254, 102, 0))
+                Text(text = "Deseja mesmo excluir sua própria conta?", color = colorResource(destaque))
             },
             text = {
-                Text(text = "Esta ação é irreversível.", color = Color(254, 102, 0))
+                Text(text = "Esta ação é irreversível.", color = colorResource(destaque))
             },
             onDismissRequest = {
                 deleteOwnAccountDialog = false
@@ -218,33 +219,34 @@ fun HomeScreen(
                         authViewModel.delete()
                     }
                 ) {
-                    Text("Sim", color = Color(254, 102, 0))
+                    Text("Sim", color = colorResource(destaque))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = {
                         deleteOwnAccountDialog = false
+                        dropdown = false
                     }
                 ) {
-                    Text("Não", color = Color(254, 102, 0))
+                    Text("Não", color = colorResource(destaque))
                 }
             },
-            containerColor = Color(20, 20, 20)
+            containerColor = colorResource(bg_dark)
         )
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(40, 40, 40)),
+            .background(colorResource(bg_mid)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = "Seja bem vindo, administrador.",
-                    color = Color(254, 102, 0),
+                    color = colorResource(destaque),
                     fontSize = 20.sp
                 )
             },
@@ -259,18 +261,14 @@ fun HomeScreen(
                 DropdownMenu(
                     expanded = dropdown,
                     onDismissRequest = { dropdown = false },
-                    containerColor = Color(20, 20, 20)
+                    containerColor = colorResource(bg_dark)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Atualizar conta", color = Color(254, 102, 0)) },
-                        onClick = { navHostController.navigate("updateown") }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Sair da conta", color = Color(254, 102, 0)) },
+                        text = { Text("Sair da conta", color = colorResource(destaque)) },
                         onClick = { authViewModel.signout() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Excluir conta", color = Color(254, 102, 0)) },
+                        text = { Text("Excluir conta", color = colorResource(destaque)) },
                         onClick = {
                             deleteOwnAccountDialog = true
                         }
@@ -278,11 +276,11 @@ fun HomeScreen(
                 }
             },
             colors = TopAppBarColors(
-                containerColor = Color(40, 40, 40),
-                scrolledContainerColor = Color(40, 40, 40),
-                navigationIconContentColor = Color(254, 102, 0),
-                titleContentColor = Color(254, 102, 0),
-                actionIconContentColor = Color(254, 102, 0)
+                containerColor = colorResource(bg_mid),
+                scrolledContainerColor = colorResource(bg_mid),
+                navigationIconContentColor = colorResource(destaque),
+                titleContentColor = colorResource(destaque),
+                actionIconContentColor = colorResource(destaque)
             ),
             modifier = modifier,
         )
@@ -294,27 +292,17 @@ fun HomeScreen(
                 Icon(
                     imageVector = Icons.Rounded.Add,
                     contentDescription = "Adicionar Usuário",
-                    tint = Color(254, 102, 0),
+                    tint = colorResource(destaque),
                 )
                 Text(
                     text = "Adicionar um novo usuário",
-                    color = Color(254, 102, 0),
+                    color = colorResource(destaque),
                     fontSize = 16.sp,
                     textDecoration = TextDecoration.Underline
                 )
             }
         }
 
-        /* Talvez usar depois
-        TextButton(onClick = {
-            authViewModel.signout()
-        }) {
-            Text(
-                text = "Sair da conta",
-                color = Color(254, 102, 0)
-            )
-        }
-         */
         LazyColumn {
             items(userList) { user ->
                 Row(
@@ -329,10 +317,10 @@ fun HomeScreen(
                     if (deleteDialog.value == true) {
                         AlertDialog(
                             title = {
-                                Text(text = "Deseja mesmo excluir esse usuário?", color = Color(254, 102, 0))
+                                Text(text = "Deseja mesmo excluir esse usuário?", color = colorResource(destaque))
                             },
                             text = {
-                                Text(text = "Esta ação é irreversível.", color = Color(254, 102, 0))
+                                Text(text = "Esta ação é irreversível.", color = colorResource(destaque))
                             },
                             onDismissRequest = {
                                 deleteDialog.value = false
@@ -341,9 +329,24 @@ fun HomeScreen(
                                 TextButton(
                                     onClick = {
                                         userFunctions.deleteUser(user.id)
+                                        db.collection("users")
+                                            .get()
+                                            .addOnSuccessListener { documents ->
+                                                userList = documents.map { document ->
+                                                    User(
+                                                        id = document.id,
+                                                        nome = document.getString("nome") ?: "",
+                                                        email = document.getString("email") ?: "",
+                                                        telefone = document.getString("telefone") ?: "",
+                                                        mensagem = document.getString("mensagem") ?: "",
+                                                        senha = document.getString("senha") ?: ""
+                                                    )
+                                                } as MutableList<User>
+                                            }
+                                        deleteDialog.value = false
                                     }
                                 ) {
-                                    Text("Sim", color = Color(254, 102, 0))
+                                    Text("Sim", color = colorResource(destaque))
                                 }
                             },
                             dismissButton = {
@@ -352,17 +355,17 @@ fun HomeScreen(
                                         deleteDialog.value = false
                                     }
                                 ) {
-                                    Text("Não", color = Color(254, 102, 0))
+                                    Text("Não", color = colorResource(destaque))
                                 }
                             },
-                            containerColor = Color(20, 20, 20)
+                            containerColor = colorResource(bg_dark)
                         )
                     }
                     Card(
                         modifier = Modifier
                             .padding(start = 16.dp, end = 16.dp),
                         colors = CardColors(
-                            containerColor = Color(86, 86, 86),
+                            containerColor = colorResource(bg_light),
                             contentColor = Color.White,
                             disabledContentColor = Color.White,
                             disabledContainerColor = Color.DarkGray
@@ -377,7 +380,7 @@ fun HomeScreen(
                             ) {
                                 Text(
                                     text = "Nome: " +user.nome,
-                                    color = Color(254, 102, 0),
+                                    color = colorResource(destaque),
                                     style = MaterialTheme.typography.titleLarge
                                 )
                                 Spacer(Modifier.weight(1f))
@@ -386,9 +389,9 @@ fun HomeScreen(
                                     contentDescription = "Editar Usuário",
                                     Modifier
                                         .clickable {
-                                            /* todo */
+                                            navHostController.navigate("update/" +user.id)
                                         },
-                                    tint = Color(254, 102, 0)
+                                    tint = colorResource(destaque)
                                 )
                                 Spacer(Modifier.padding(horizontal = 6.dp))
                                 Icon(
@@ -399,7 +402,7 @@ fun HomeScreen(
                                             deleteDialog.value = true
                                            // userFunctions.deleteUser(user.id)
                                         },
-                                    tint = Color(254, 102, 0)
+                                    tint = colorResource(destaque)
                                 )
                             }
                             Row(
@@ -439,6 +442,7 @@ fun HomeScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -472,11 +476,11 @@ fun LoginScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(40, 40, 40)),
+            .background(colorResource(bg_mid)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Página de Login", fontSize = 32.sp, color = Color(254, 102, 0))
+        Text(text = "Página de Login", fontSize = 32.sp, color = colorResource(destaque))
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -489,17 +493,17 @@ fun LoginScreen(
                 Text(text = "Email")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -521,17 +525,17 @@ fun LoginScreen(
 
             visualTransformation = PasswordVisualTransformation(),
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done,
@@ -544,7 +548,7 @@ fun LoginScreen(
         Button(onClick = {
             authViewModel.login(email, senha)
         },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(destaque)),
             enabled = authState.value != AuthState.Loading
         ) {
             Text(text = "Login", color = Color.White)
@@ -556,7 +560,7 @@ fun LoginScreen(
         TextButton(onClick = {
             navHostController.navigate("register")
         }) {
-            Text(text = "Não possui uma conta? Registre-se", color = Color(254, 102, 0))
+            Text(text = "Não possui uma conta? Registre-se", color = colorResource(destaque))
         }
     }
 }
@@ -596,11 +600,11 @@ fun RegisterScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(40, 40, 40)),
+            .background(colorResource(bg_mid)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Página de Registro", fontSize = 32.sp, color = Color(254, 102, 0))
+        Text(text = "Página de Registro", fontSize = 32.sp, color = colorResource(destaque))
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -613,17 +617,17 @@ fun RegisterScreen(
                 Text(text = "Email")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -645,17 +649,17 @@ fun RegisterScreen(
 
             visualTransformation = PasswordVisualTransformation(),
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done,
@@ -669,7 +673,7 @@ fun RegisterScreen(
         Button(onClick = {
             authViewModel.signup(email, senha)
         },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(destaque)),
             enabled = authState.value != AuthState.Loading
         ) {
             Text(text = "Criar conta", color = Color.White)
@@ -680,110 +684,7 @@ fun RegisterScreen(
         TextButton(onClick = {
             navHostController.navigate("login")
         }) {
-            Text(text = "Já possui uma conta? Faça Login", color = Color(254, 102, 0))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun UpdateOwnAccountScreen(
-    modifier: Modifier = Modifier,
-    mainActivity: MainActivity,
-    navHostController: NavHostController,
-    authViewModel: AuthViewModel
-) {
-    var email by remember {
-        mutableStateOf(FirebaseAuth.getInstance().currentUser!!.email)
-    }
-    var senha by remember {
-        mutableStateOf("")
-    }
-
-    val authState = authViewModel.authState.observeAsState()
-    val context = LocalContext.current
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(40, 40, 40)),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Página de Registro", fontSize = 32.sp, color = Color(254, 102, 0))
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email.toString(),
-            onValueChange = {
-                email = it
-            },
-            label = {
-                Text(text = "Email")
-            },
-            colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
-                unfocusedTextColor = Color.White,
-
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
-                focusedTextColor = Color.White,
-
-                cursorColor = Color(254, 102, 0)
-            ),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Email
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = senha,
-            onValueChange = {
-                senha = it
-            },
-            label = {
-                Text(text = "Senha")
-            },
-
-            visualTransformation = PasswordVisualTransformation(),
-            colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
-                unfocusedTextColor = Color.White,
-
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
-                focusedTextColor = Color.White,
-
-                cursorColor = Color(254, 102, 0)
-            ),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
-                keyboardType = KeyboardType.Password
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            authViewModel.update(email, senha)
-            navHostController.popBackStack()
-        },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
-            enabled = authState.value != AuthState.Loading
-        ) {
-            Text(text = "Atualizar", color = Color.White)
+            Text(text = "Já possui uma conta? Faça Login", color = colorResource(destaque))
         }
     }
 }
@@ -817,21 +718,57 @@ fun CreateUpdateScreen(
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
 
+    LaunchedEffect(Unit) {
+        if (uid != "") {
+            FirebaseFirestore.getInstance().collection("users").document(uid.toString())
+                .get()
+                .addOnSuccessListener { result ->
+                    val userData = result.toObject(User::class.java)!!
+                    name = userData.nome
+                    email = userData.email
+                    telefone = userData.telefone
+                    mensagem = userData.mensagem
+                    senha = userData.senha
+                }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(40, 40, 40)),
-        verticalArrangement = Arrangement.Center,
+            .background(colorResource(bg_mid)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text =
-                if(createOrUpdate == "create") {
-                    "Adicionar usuário"
-                } else {
-                    "Atualizar usuário"
-                },
-            fontSize = 32.sp, color = Color(254, 102, 0)
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text =
+                        if(createOrUpdate == "create") {
+                            "Adicionar usuário"
+                        } else {
+                            "Atualizar usuário"
+                        },
+                    color = colorResource(destaque),
+                    fontSize = 24.sp,
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = {navHostController.popBackStack()}) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        modifier = Modifier.padding(start = 2.dp)
+                    )
+                }
+            },
+            colors = TopAppBarColors(
+                containerColor = colorResource(bg_mid),
+                scrolledContainerColor = colorResource(bg_mid),
+                navigationIconContentColor = colorResource(destaque),
+                titleContentColor = colorResource(destaque),
+                actionIconContentColor = colorResource(destaque)
+            ),
+            modifier = modifier,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -845,17 +782,17 @@ fun CreateUpdateScreen(
                 Text(text = "Nome")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -875,17 +812,17 @@ fun CreateUpdateScreen(
                 Text(text = "Email")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -905,17 +842,17 @@ fun CreateUpdateScreen(
                 Text(text = "Telefone")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -935,17 +872,17 @@ fun CreateUpdateScreen(
                 Text(text = "Mensagem")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
@@ -967,17 +904,17 @@ fun CreateUpdateScreen(
 
             visualTransformation = PasswordVisualTransformation(),
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color(254, 102, 0),
-                unfocusedLabelColor = Color(254, 102, 0),
-                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedIndicatorColor = colorResource(destaque),
+                unfocusedLabelColor = colorResource(destaque),
+                unfocusedContainerColor = colorResource(bg_mid),
                 unfocusedTextColor = Color.White,
 
-                focusedIndicatorColor = Color(254, 102, 0),
-                focusedLabelColor = Color(254, 102, 0),
-                focusedContainerColor = Color(40, 40, 40),
+                focusedIndicatorColor = colorResource(destaque),
+                focusedLabelColor = colorResource(destaque),
+                focusedContainerColor = colorResource(bg_mid),
                 focusedTextColor = Color.White,
 
-                cursorColor = Color(254, 102, 0)
+                cursorColor = colorResource(destaque)
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done,
@@ -1015,7 +952,7 @@ fun CreateUpdateScreen(
                 navHostController.popBackStack()
             }
         },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0))
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(destaque))
         ) {
             Text(
                 text =

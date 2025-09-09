@@ -69,12 +69,6 @@ class AuthViewModel : ViewModel() {
         _authState.value = AuthState.Unauthenticated
     }
 
-    fun update(email: String?, password: String) {
-        auth.currentUser!!.verifyBeforeUpdateEmail(email.toString())
-        auth.currentUser!!.updatePassword(password)
-    }
-
-
 }
 
 
