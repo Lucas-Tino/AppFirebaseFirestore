@@ -9,9 +9,9 @@ class UserFunctions {
 
     val db = FirebaseFirestore.getInstance()
 
-    fun addUser(user: HashMap<String, String>, uid: String) {
-        db.collection("users").document(uid)
-            .set(user)
+    fun addUser(user: HashMap<String, String>) {
+        db.collection("users")
+            .add(user)
     }
 
     fun getUser(uid: String) {
@@ -37,9 +37,9 @@ class UserFunctions {
             }
     }
 
-    fun updateUser(uid: String, updates: Map<String, Any>) {
+    fun updateUser(user: HashMap<String, String>, uid: String) {
         db.collection("users").document(uid)
-            .update(updates)
+            .set(user)
             .addOnSuccessListener {
 
             }

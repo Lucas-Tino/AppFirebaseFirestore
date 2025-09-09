@@ -1,7 +1,6 @@
 package com.example.appfirebasefirestore
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import com.example.appfirebasefirestore.ui.theme.AppFirebaseFirestoreTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,16 +23,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.ExitToApp
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,13 +66,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.appfirebasefirestore.UserFunctions
-import com.google.firebase.firestore.toObject
-import kotlinx.coroutines.tasks.await
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,6 +114,34 @@ class MainActivity : ComponentActivity() {
                                 authViewModel
                             )
                         }
+                        composable("updateown") {
+                            UpdateOwnAccountScreen(
+                                Modifier,
+                                act,
+                                navController,
+                                authViewModel
+                            )
+                        }
+                        composable("create") {
+                            CreateUpdateScreen(
+                                Modifier,
+                                act,
+                                navController,
+                                authViewModel,
+                                "create",
+                                "a"
+                            )
+                        }
+                        composable("update") {
+                            CreateUpdateScreen(
+                                Modifier,
+                                act,
+                                navController,
+                                authViewModel,
+                                "update",
+                                "a"
+                            )
+                        }
                     }
                 }
             }
@@ -154,18 +178,9 @@ fun HomeScreen(
 
     val firebaseUser = FirebaseAuth.getInstance().currentUser;
 
-    // obtendo dados do usuário atual
-    LaunchedEffect(firebaseUser) {
-        val uid = firebaseUser?.uid
-            db.collection("users").document(uid.toString())
-                .get()
-                .addOnSuccessListener { result ->
-                    userData = result.toObject(User::class.java)!!
-                }
-    }
-
     var userList by remember { mutableStateOf<List<User>>(emptyList()) }
 
+    // listar usuários
     LaunchedEffect(Unit) {
         db.collection("users")
             .get()
@@ -183,23 +198,97 @@ fun HomeScreen(
             }
     }
 
+    var dropdown by remember { mutableStateOf(false) }
+    var deleteOwnAccountDialog by remember { mutableStateOf(false) }
+
+    if (deleteOwnAccountDialog == true) {
+        AlertDialog(
+            title = {
+                Text(text = "Deseja mesmo excluir sua própria conta?", color = Color(254, 102, 0))
+            },
+            text = {
+                Text(text = "Esta ação é irreversível.", color = Color(254, 102, 0))
+            },
+            onDismissRequest = {
+                deleteOwnAccountDialog = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        authViewModel.delete()
+                    }
+                ) {
+                    Text("Sim", color = Color(254, 102, 0))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        deleteOwnAccountDialog = false
+                    }
+                ) {
+                    Text("Não", color = Color(254, 102, 0))
+                }
+            },
+            containerColor = Color(20, 20, 20)
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(Color(40, 40, 40)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "Seja bem vindo, " +userData.nome,
-            fontSize = 28.sp, color = Color(254, 102, 0),
-            textAlign = TextAlign.Center,
-            lineHeight = 36.sp,
-            modifier = Modifier
-                .padding(top = 20.dp, bottom = 20.dp)
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "Seja bem vindo, administrador.",
+                    color = Color(254, 102, 0),
+                    fontSize = 20.sp
+                )
+            },
+            actions = {
+                IconButton(onClick = {dropdown = true}) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = "Novo",
+                        modifier = Modifier.padding(end = 2.dp)
+                    )
+                }
+                DropdownMenu(
+                    expanded = dropdown,
+                    onDismissRequest = { dropdown = false },
+                    containerColor = Color(20, 20, 20)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Atualizar conta", color = Color(254, 102, 0)) },
+                        onClick = { navHostController.navigate("updateown") }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Sair da conta", color = Color(254, 102, 0)) },
+                        onClick = { authViewModel.signout() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Excluir conta", color = Color(254, 102, 0)) },
+                        onClick = {
+                            deleteOwnAccountDialog = true
+                        }
+                    )
+                }
+            },
+            colors = TopAppBarColors(
+                containerColor = Color(40, 40, 40),
+                scrolledContainerColor = Color(40, 40, 40),
+                navigationIconContentColor = Color(254, 102, 0),
+                titleContentColor = Color(254, 102, 0),
+                actionIconContentColor = Color(254, 102, 0)
+            ),
+            modifier = modifier,
         )
 
         TextButton(onClick = {
-            /* todo */
+            navHostController.navigate("create")
         }) {
             Row (verticalAlignment = Alignment.CenterVertically){
                 Icon(
@@ -234,6 +323,41 @@ fun HomeScreen(
                         .padding(vertical = 8.dp),
                     Arrangement.Center
                 ) {
+
+                    // popup para confirmar deleção de usuários
+                    val deleteDialog = remember { mutableStateOf(false) }
+                    if (deleteDialog.value == true) {
+                        AlertDialog(
+                            title = {
+                                Text(text = "Deseja mesmo excluir esse usuário?", color = Color(254, 102, 0))
+                            },
+                            text = {
+                                Text(text = "Esta ação é irreversível.", color = Color(254, 102, 0))
+                            },
+                            onDismissRequest = {
+                                deleteDialog.value = false
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        userFunctions.deleteUser(user.id)
+                                    }
+                                ) {
+                                    Text("Sim", color = Color(254, 102, 0))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        deleteDialog.value = false
+                                    }
+                                ) {
+                                    Text("Não", color = Color(254, 102, 0))
+                                }
+                            },
+                            containerColor = Color(20, 20, 20)
+                        )
+                    }
                     Card(
                         modifier = Modifier
                             .padding(start = 16.dp, end = 16.dp),
@@ -272,14 +396,10 @@ fun HomeScreen(
                                     contentDescription = "Deletar Usuário",
                                     Modifier
                                         .clickable {
-                                            if (user.id == firebaseUser?.uid) {
-                                                Toast.makeText(context, "Esta é a sua conta!", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                userFunctions.deleteUser(user.id)
-                                                // adicionar lógica para excluir do auth também
-                                            }
+                                            deleteDialog.value = true
+                                           // userFunctions.deleteUser(user.id)
                                         },
-                                    tint = if (user.id == firebaseUser?.uid) Color(185, 85, 0) else Color(254, 102, 0)
+                                    tint = Color(254, 102, 0)
                                 )
                             }
                             Row(
@@ -396,7 +516,7 @@ fun LoginScreen(
                 senha = it
             },
             label = {
-                Text(text = "Password")
+                Text(text = "Senha")
             },
 
             visualTransformation = PasswordVisualTransformation(),
@@ -449,16 +569,7 @@ fun RegisterScreen(
     navHostController: NavHostController,
     authViewModel: AuthViewModel
 ) {
-    var name by remember {
-        mutableStateOf("")
-    }
     var email by remember {
-        mutableStateOf("")
-    }
-    var telefone by remember {
-        mutableStateOf("")
-    }
-    var mensagem by remember {
         mutableStateOf("")
     }
     var senha by remember {
@@ -471,15 +582,6 @@ fun RegisterScreen(
     LaunchedEffect(authState.value) {
         when (authState.value) {
             is AuthState.Authenticated -> {
-                val user = hashMapOf(
-                    "nome" to name,
-                    "email" to email,
-                    "telefone" to telefone,
-                    "mensagem" to mensagem,
-                    "senha" to senha
-                )
-
-                FirebaseAuth.getInstance().currentUser?.let { UserFunctions().addUser(user, it.uid) }
                 navHostController.navigate("home")
             }
             is AuthState.Error -> Toast.makeText(
@@ -499,6 +601,238 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "Página de Registro", fontSize = 32.sp, color = Color(254, 102, 0))
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = {
+                email = it
+            },
+            label = {
+                Text(text = "Email")
+            },
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color(254, 102, 0),
+                unfocusedLabelColor = Color(254, 102, 0),
+                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedTextColor = Color.White,
+
+                focusedIndicatorColor = Color(254, 102, 0),
+                focusedLabelColor = Color(254, 102, 0),
+                focusedContainerColor = Color(40, 40, 40),
+                focusedTextColor = Color.White,
+
+                cursorColor = Color(254, 102, 0)
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Email
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = senha,
+            onValueChange = {
+                senha = it
+            },
+            label = {
+                Text(text = "Senha")
+            },
+
+            visualTransformation = PasswordVisualTransformation(),
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color(254, 102, 0),
+                unfocusedLabelColor = Color(254, 102, 0),
+                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedTextColor = Color.White,
+
+                focusedIndicatorColor = Color(254, 102, 0),
+                focusedLabelColor = Color(254, 102, 0),
+                focusedContainerColor = Color(40, 40, 40),
+                focusedTextColor = Color.White,
+
+                cursorColor = Color(254, 102, 0)
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Password
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            authViewModel.signup(email, senha)
+        },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
+            enabled = authState.value != AuthState.Loading
+        ) {
+            Text(text = "Criar conta", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = {
+            navHostController.navigate("login")
+        }) {
+            Text(text = "Já possui uma conta? Faça Login", color = Color(254, 102, 0))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UpdateOwnAccountScreen(
+    modifier: Modifier = Modifier,
+    mainActivity: MainActivity,
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
+    var email by remember {
+        mutableStateOf(FirebaseAuth.getInstance().currentUser!!.email)
+    }
+    var senha by remember {
+        mutableStateOf("")
+    }
+
+    val authState = authViewModel.authState.observeAsState()
+    val context = LocalContext.current
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(40, 40, 40)),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Página de Registro", fontSize = 32.sp, color = Color(254, 102, 0))
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email.toString(),
+            onValueChange = {
+                email = it
+            },
+            label = {
+                Text(text = "Email")
+            },
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color(254, 102, 0),
+                unfocusedLabelColor = Color(254, 102, 0),
+                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedTextColor = Color.White,
+
+                focusedIndicatorColor = Color(254, 102, 0),
+                focusedLabelColor = Color(254, 102, 0),
+                focusedContainerColor = Color(40, 40, 40),
+                focusedTextColor = Color.White,
+
+                cursorColor = Color(254, 102, 0)
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Email
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = senha,
+            onValueChange = {
+                senha = it
+            },
+            label = {
+                Text(text = "Senha")
+            },
+
+            visualTransformation = PasswordVisualTransformation(),
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color(254, 102, 0),
+                unfocusedLabelColor = Color(254, 102, 0),
+                unfocusedContainerColor = Color(40, 40, 40),
+                unfocusedTextColor = Color.White,
+
+                focusedIndicatorColor = Color(254, 102, 0),
+                focusedLabelColor = Color(254, 102, 0),
+                focusedContainerColor = Color(40, 40, 40),
+                focusedTextColor = Color.White,
+
+                cursorColor = Color(254, 102, 0)
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Password
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            authViewModel.update(email, senha)
+            navHostController.popBackStack()
+        },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
+            enabled = authState.value != AuthState.Loading
+        ) {
+            Text(text = "Atualizar", color = Color.White)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateUpdateScreen(
+    modifier: Modifier = Modifier,
+    mainActivity: MainActivity,
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel,
+    createOrUpdate: String,
+    uid: String
+) {
+    var name by remember {
+        mutableStateOf("")
+    }
+    var email by remember {
+        mutableStateOf("")
+    }
+    var telefone by remember {
+        mutableStateOf("")
+    }
+    var mensagem by remember {
+        mutableStateOf("")
+    }
+    var senha by remember {
+        mutableStateOf("")
+    }
+
+    val authState = authViewModel.authState.observeAsState()
+    val context = LocalContext.current
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(40, 40, 40)),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text =
+                if(createOrUpdate == "create") {
+                    "Adicionar usuário"
+                } else {
+                    "Atualizar usuário"
+                },
+            fontSize = 32.sp, color = Color(254, 102, 0)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -655,30 +989,43 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            authViewModel.signup(email, senha)
+            if(createOrUpdate == "create") {
+                val user = hashMapOf(
+                    "nome" to name,
+                    "email" to email,
+                    "telefone" to telefone,
+                    "mensagem" to mensagem,
+                    "senha" to senha
+                )
 
-            val user = hashMapOf(
-                "nome" to name,
-                "email" to email,
-                "telefone" to telefone,
-                "mensagem" to mensagem,
-                "senha" to senha
-            )
+                UserFunctions().addUser(user)
 
-            FirebaseAuth.getInstance().currentUser?.let { UserFunctions().addUser(user, it.uid) }
+                navHostController.popBackStack()
+            } else {
+                val user = hashMapOf(
+                    "nome" to name,
+                    "email" to email,
+                    "telefone" to telefone,
+                    "mensagem" to mensagem,
+                    "senha" to senha
+                )
+
+                UserFunctions().updateUser(user, uid)
+
+                navHostController.popBackStack()
+            }
         },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0)),
-            enabled = authState.value != AuthState.Loading
+            colors = ButtonDefaults.buttonColors(containerColor = Color(254, 102, 0))
         ) {
-            Text(text = "Criar conta", color = Color.White)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextButton(onClick = {
-            navHostController.navigate("login")
-        }) {
-            Text(text = "Já possui uma conta? Faça Login", color = Color(254, 102, 0))
+            Text(
+                text =
+                    if(createOrUpdate == "create") {
+                        "Adicionar usuário"
+                    } else {
+                        "Atualizar usuário"
+                    },
+                color = Color.White
+            )
         }
     }
 }
